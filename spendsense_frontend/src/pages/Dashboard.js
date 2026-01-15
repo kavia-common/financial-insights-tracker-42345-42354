@@ -6,10 +6,12 @@ import { StatWidget } from "../components/StatWidget";
 import { IconBell, IconLayout, IconSparkles, IconWallet } from "../components/Icons";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { DashboardSummaryPanel } from "../components/DashboardSummaryPanel";
+import { ExecutiveSummaryPanel } from "../components/ExecutiveSummaryPanel";
 import { DashboardQA } from "../components/DashboardQA";
 import { getMockTransactions } from "../data/mockData";
 import { summarizeDashboard } from "../utils/summarizeDashboard";
 import { buildDashboardSnapshot } from "../utils/snapshot";
+import { generateExecutiveSummary } from "../utils/executiveSummary";
 
 function computeKPIs(transactions) {
   const outflow = transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
@@ -38,6 +40,11 @@ export default function Dashboard() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summary, setSummary] = useState(null);
+
+  const [execOpen, setExecOpen] = useState(false);
+  const [execLoading, setExecLoading] = useState(false);
+  const [execBullets, setExecBullets] = useState(null);
+
   const timerRef = useRef(null);
 
   const filtered = useMemo(() => {
@@ -69,6 +76,21 @@ export default function Dashboard() {
     }, randomDelayMs(200, 400));
   };
 
+  const onExecutiveSummary = () => {
+    setExecOpen(true);
+    setExecLoading(true);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    timerRef.current = setTimeout(() => {
+      // IMPORTANT: Executive summary must ONLY use dashboard-visible data.
+      // We use the snapshot contract to enforce this.
+      const bullets = generateExecutiveSummary(snapshot);
+      setExecBullets(bullets);
+      setExecLoading(false);
+    }, randomDelayMs(200, 400));
+  };
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -87,6 +109,17 @@ export default function Dashboard() {
           title="Generate a short summary from the current dashboard data"
         >
           {summaryLoading ? "Summarizing…" : "Summarize Dashboard"}
+        </button>
+
+        <button
+          type="button"
+          className="btn btnPrimary"
+          onClick={onExecutiveSummary}
+          aria-label="Open executive summary"
+          disabled={execLoading}
+          title="Generate an executive-level summary from the current dashboard data"
+        >
+          {execLoading ? "Generating…" : "Executive Summary"}
         </button>
       </div>
 
@@ -173,6 +206,16 @@ export default function Dashboard() {
         onClose={() => {
           setSummaryOpen(false);
           setSummaryLoading(false);
+        }}
+      />
+
+      <ExecutiveSummaryPanel
+        open={execOpen}
+        loading={execLoading}
+        bullets={execBullets}
+        onClose={() => {
+          setExecOpen(false);
+          setExecLoading(false);
         }}
       />
     </>
