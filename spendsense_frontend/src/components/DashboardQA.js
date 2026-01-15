@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "./Card";
 import { answerFromDashboard, DASHBOARD_QA_FALLBACK_TEXT } from "../utils/answerFromDashboard";
+import { explainTrend } from "../utils/explainTrend";
 
 function randomDelayMs(min = 200, max = 400) {
   const lo = Math.max(0, Number(min) || 0);
@@ -8,16 +9,53 @@ function randomDelayMs(min = 200, max = 400) {
   return Math.floor(lo + Math.random() * (hi - lo + 1));
 }
 
+function normalizeWhyQuestion(q) {
+  // Very small, deterministic normalizer for "why" detection.
+  return String(q || "")
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isWhyHappeningQuestion(q) {
+  const n = normalizeWhyQuestion(q);
+
+  // Detect common variants (keep conservative to avoid misrouting other questions).
+  // Examples handled:
+  // - "Why is this happening?"
+  // - "why this"
+  // - "why is that"
+  // - "why is it happening"
+  if (!n) return false;
+
+  if (n === "why" || n === "why this" || n === "why that") return true;
+
+  const hasWhy = n.startsWith("why ") || n === "why";
+  if (!hasWhy) return false;
+
+  if (n.includes("why is this happening")) return true;
+  if (n.includes("why is that happening")) return true;
+  if (n.includes("why is it happening")) return true;
+  if (n.includes("why is this") || n.includes("why is that") || n.includes("why is it")) return true;
+
+  return false;
+}
+
 // PUBLIC_INTERFACE
 export function DashboardQA({ snapshot }) {
   /**
    * Dashboard Q&A assistant panel.
    * - Answers strictly from snapshot (no API calls).
+   * - Adds "Why is this happening?" flow using only dashboard-visible metrics.
    * - Accessible: labeled input, keyboard submit, aria-live for results.
    */
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
+  // Remember prior context so a generic "why" can attach to the last discussed metric.
+  const [lastContext, setLastContext] = useState(null);
 
   const timerRef = useRef(null);
   const inputRef = useRef(null);
@@ -61,6 +99,29 @@ export function DashboardQA({ snapshot }) {
     };
   }, []);
 
+  const inferContextFromAnswer = (q, r) => {
+    // Only store minimal, safe hints. We do not store or infer anything beyond what the snapshot already contains.
+    const normalized = String(q || "").toLowerCase();
+
+    // If user mentioned a visible category explicitly, keep it as focus.
+    const topCats = snapshot?.tables?.topCategories;
+    if (Array.isArray(topCats) && topCats.length > 0) {
+      const match = topCats.find((c) => c?.category && normalized.includes(String(c.category).toLowerCase()));
+      if (match?.category) {
+        return { focus: { type: "category", category: match.category }, fromQuestion: q };
+      }
+    }
+
+    // If the assistant used certain fields, store a focus hint.
+    const used = Array.isArray(r?.usedFields) ? r.usedFields : [];
+    if (used.includes("kpis.outflow")) return { focus: { type: "kpi", metric: "outflow" }, fromQuestion: q };
+    if (used.includes("kpis.inflow")) return { focus: { type: "kpi", metric: "inflow" }, fromQuestion: q };
+    if (used.includes("kpis.net")) return { focus: { type: "kpi", metric: "net" }, fromQuestion: q };
+    if (used.includes("series.spendingByDay")) return { focus: { type: "trend", metric: "spendingByDay" }, fromQuestion: q };
+
+    return null;
+  };
+
   const submit = (e, forcedQuestion) => {
     e?.preventDefault?.();
 
@@ -77,7 +138,18 @@ export function DashboardQA({ snapshot }) {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
-      const r = answerFromDashboard({ question: q, snapshot });
+      let r;
+
+      if (isWhyHappeningQuestion(q)) {
+        // Route generic "why" to explanation engine using snapshot + last known context (if any).
+        r = explainTrend({ snapshot, context: lastContext });
+        // Do not overwrite lastContext with a "why" question.
+      } else {
+        r = answerFromDashboard({ question: q, snapshot });
+        const inferred = inferContextFromAnswer(q, r);
+        if (inferred) setLastContext(inferred);
+      }
+
       setResult(r);
       setLoading(false);
     }, randomDelayMs(200, 400));
@@ -118,7 +190,7 @@ export function DashboardQA({ snapshot }) {
         </div>
 
         <div id={`${regionId}-hint`} className="helper">
-          Tip: Try “top categories”, “largest transactions”, “flagged items”, or “net cashflow”.
+          Tip: Try “top categories”, “largest transactions”, “flagged items”, “net cashflow”, or “Why is this happening?”.
         </div>
 
         <div
@@ -130,17 +202,17 @@ export function DashboardQA({ snapshot }) {
             <div key={group.title} className="dashQASuggestionGroup">
               <div className="dashQASuggestionTitle">{group.title}</div>
               <div className="dashQASuggestionChips">
-                {group.questions.map((q) => (
+                {group.questions.map((sq) => (
                   <button
-                    key={q}
+                    key={sq}
                     type="button"
                     className="chip dashQASuggestionChip"
                     role="button"
-                    aria-label={`Ask: ${q}`}
-                    onClick={() => onPickSuggestion(q)}
+                    aria-label={`Ask: ${sq}`}
+                    onClick={() => onPickSuggestion(sq)}
                     disabled={loading}
                   >
-                    {q}
+                    {sq}
                   </button>
                 ))}
               </div>
