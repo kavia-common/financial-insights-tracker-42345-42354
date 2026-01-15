@@ -7,6 +7,28 @@ function isoDate(daysAgo) {
 }
 
 // PUBLIC_INTERFACE
+export function getMockCategories() {
+  /** Returns categories used by mock transactions (for filters). */
+  return [
+    "Food & Drink",
+    "Subscriptions",
+    "Transport",
+    "Groceries",
+    "Housing",
+    "Income",
+    "Shopping",
+    "Utilities",
+    "Transfer",
+  ];
+}
+
+// PUBLIC_INTERFACE
+export function getMockAlertSeverities() {
+  /** Returns available alert severities (for filters). */
+  return ["Low", "Med", "High"];
+}
+
+// PUBLIC_INTERFACE
 export function getMockTransactions() {
   /** Returns a list of mock transactions for UI development. */
   return [
@@ -29,9 +51,30 @@ export function getMockTransactions() {
 export function getMockAlerts() {
   /** Returns a list of mock alerts for UI development. */
   return [
-    { id: "a1", severity: "Critical", title: "Unusual spend detected", description: "Amazon purchase is 3.1× your typical shopping spend.", time: "Today • 9:12 AM" },
-    { id: "a2", severity: "Warning", title: "Subscription creep", description: "Subscriptions have increased +12% over the last 30 days.", time: "Yesterday • 6:40 PM" },
-    { id: "a3", severity: "Info", title: "Budget insight", description: "Food & Drink is trending below your monthly budget.", time: "2 days ago • 2:05 PM" },
+    {
+      id: "a1",
+      severity: "High",
+      status: "Active",
+      title: "Unusual spend detected",
+      description: "Amazon purchase is 3.1× your typical shopping spend.",
+      time: "Today • 9:12 AM",
+    },
+    {
+      id: "a2",
+      severity: "Med",
+      status: "Active",
+      title: "Subscription creep",
+      description: "Subscriptions have increased +12% over the last 30 days.",
+      time: "Yesterday • 6:40 PM",
+    },
+    {
+      id: "a3",
+      severity: "Low",
+      status: "Resolved",
+      title: "Budget insight",
+      description: "Food & Drink is trending below your monthly budget.",
+      time: "2 days ago • 2:05 PM",
+    },
   ];
 }
 

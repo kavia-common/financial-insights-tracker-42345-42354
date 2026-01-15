@@ -26,9 +26,6 @@ export function AlertList({ items }) {
           </span>
         </div>
       ))}
-      {items.length === 0 ? (
-        <div style={{ color: "rgba(17,24,39,0.6)", fontSize: 13 }}>No alerts.</div>
-      ) : null}
     </div>
   );
 }
