@@ -20,16 +20,25 @@ function initials(name) {
 
 // PUBLIC_INTERFACE
 export function Navbar({ brandTitle = "SpendSense" }) {
-  /** Responsive top navbar: collapsible on mobile, links to main pages, and demo auth toggle. */
+  /** Responsive top navbar: collapsible on mobile, links to main pages, and auth status indicator. */
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const location = useLocation();
-  const { isAuthenticated, toggleAuth } = useAuth();
 
-  const user = useMemo(() => {
-    // TODO: replace with real user profile
-    return { name: "Jordan Smith", role: isAuthenticated ? "Signed in" : "Guest" };
-  }, [isAuthenticated]);
+  const { user, session, loading, signOut } = useAuth();
+
+  const isAuthenticated = !!session;
+
+  const displayName = useMemo(() => {
+    const email = user?.email ? String(user.email) : "";
+    // Keep it short in the navbar
+    if (email.includes("@")) return email.split("@")[0];
+    return email || "User";
+  }, [user?.email]);
+
+  const userMeta = useMemo(() => {
+    return { name: isAuthenticated ? displayName : "Guest", role: isAuthenticated ? "Signed in" : "Guest" };
+  }, [displayName, isAuthenticated]);
 
   // Close dropdown on route change.
   useEffect(() => {
@@ -54,6 +63,8 @@ export function Navbar({ brandTitle = "SpendSense" }) {
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((v) => !v)}
+          disabled={loading}
+          title={loading ? "Auth initializing…" : undefined}
         >
           <span aria-hidden="true">{open ? "✕" : "☰"}</span>
         </button>
@@ -76,21 +87,41 @@ export function Navbar({ brandTitle = "SpendSense" }) {
           <button
             type="button"
             className="navbarAuthBtn"
-            onClick={toggleAuth}
-            aria-label={isAuthenticated ? "Simulate logout" : "Simulate login"}
-            title="Stub auth toggle (demo only)"
+            onClick={async () => {
+              // No sign-in UI yet; but real sign-out is useful for testing session reactivity.
+              if (!isAuthenticated) return;
+              await signOut();
+            }}
+            aria-label={
+              loading ? "Auth loading" : isAuthenticated ? "Sign out (Supabase)" : "Not signed in (no sign-in UI yet)"
+            }
+            title={
+              loading
+                ? "Auth initializing…"
+                : isAuthenticated
+                  ? "Sign out (Supabase)"
+                  : "No sign-in UI yet. Add a sign-in page when ready."
+            }
+            disabled={loading || !isAuthenticated}
           >
-            <span className="navbarAuthDot" aria-hidden="true" data-on={isAuthenticated ? "1" : "0"} />
-            <span style={{ fontWeight: 750 }}>{isAuthenticated ? "Signed in" : "Guest"}</span>
+            <span
+              className="navbarAuthDot"
+              aria-hidden="true"
+              data-on={isAuthenticated && !loading ? "1" : "0"}
+              style={loading ? { opacity: 0.6 } : undefined}
+            />
+            <span style={{ fontWeight: 750 }}>
+              {loading ? "Loading…" : isAuthenticated ? "Signed in" : "Guest"}
+            </span>
           </button>
 
           <div className="navbarAvatar" aria-label="User summary">
             <span className="navbarAvatarCircle" aria-hidden="true">
-              {initials(user.name)}
+              {initials(userMeta.name)}
             </span>
             <span className="navbarAvatarMeta">
-              <span className="navbarAvatarName">{user.name}</span>
-              <span className="navbarAvatarRole">{user.role}</span>
+              <span className="navbarAvatarName">{userMeta.name}</span>
+              <span className="navbarAvatarRole">{userMeta.role}</span>
             </span>
           </div>
         </div>
@@ -114,6 +145,9 @@ export function Navbar({ brandTitle = "SpendSense" }) {
         <div className="navbarPanelFooter">
           <div style={{ color: "rgba(17,24,39,0.6)", fontSize: 12 }}>
             Protected routes demo: Insights & Alerts
+          </div>
+          <div style={{ marginTop: 6, color: "rgba(17,24,39,0.55)", fontSize: 12 }}>
+            Auth: {loading ? "initializing…" : isAuthenticated ? "signed in" : "guest"}
           </div>
         </div>
       </div>
