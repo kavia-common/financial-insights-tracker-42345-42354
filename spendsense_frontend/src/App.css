@@ -453,6 +453,355 @@ a {
   font-size: 13px;
 }
 
+/* Navbar (responsive, Ocean Professional) */
+.navbar {
+  position: relative;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.navbarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 10px 12px;
+}
+
+.navbarBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.navbarBrandMark {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, rgba(37, 99, 235, 1), rgba(245, 158, 11, 1));
+  box-shadow: var(--shadow-sm);
+}
+
+.navbarBrandText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.navbarBrandTitle {
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  font-size: 14px;
+}
+
+.navbarBrandSub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.navbarLinksDesktop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.navbarLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  color: rgba(17, 24, 39, 0.92);
+  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.navbarLink:hover {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.18);
+}
+
+.navbarLink:active {
+  transform: translateY(1px);
+}
+
+.navbarLinkActive {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.navbarIcon {
+  width: 18px;
+  height: 18px;
+  color: rgba(37, 99, 235, 0.95);
+}
+
+.navbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbarAuthBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-sm);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: transform var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.78);
+}
+
+.navbarAuthBtn:hover {
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.navbarAuthBtn:active {
+  transform: translateY(1px);
+}
+
+.navbarAuthDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(239, 68, 68, 0.55);
+}
+
+.navbarAuthDot[data-on="1"] {
+  background: rgba(16, 185, 129, 0.55);
+}
+
+.navbarAvatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.90);
+  box-shadow: var(--shadow-sm);
+  padding: 7px 10px;
+}
+
+.navbarAvatarCircle {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.14);
+  display: grid;
+  place-items: center;
+  font-weight: 850;
+  color: rgba(37, 99, 235, 1);
+  font-size: 12px;
+}
+
+.navbarAvatarMeta {
+  display: none;
+}
+
+.navbarAvatarName {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.navbarAvatarRole {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.1;
+}
+
+.navbarToggle {
+  display: none;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.navbarOverlay {
+  display: none;
+}
+
+.navbarPanel {
+  display: none;
+}
+
+/* Rich chart skeleton placeholders */
+.chartSkeleton {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(17, 24, 39, 0.18);
+  background:
+    linear-gradient(180deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0.92));
+  padding: var(--space-4);
+}
+
+.chartSkeletonHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.chartSkeletonTitle {
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: rgba(17, 24, 39, 0.82);
+  font-size: 13px;
+}
+
+.chartSkeletonDesc {
+  margin-top: 6px;
+  color: rgba(17, 24, 39, 0.55);
+  font-size: 12px;
+}
+
+.chartSkeletonMeta {
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.45);
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.chartSkeletonBody {
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+
+.chartSkeletonPieWrap {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.chartSkeletonLegend {
+  display: grid;
+  gap: 12px;
+  align-self: center;
+}
+
+.chartSkeletonLegendRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chartSkeletonLegendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+}
+
+/* Responsive */
+@media (max-width: 1060px) {
+  .navbarAvatarMeta {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .navbarLinksDesktop {
+    display: none;
+  }
+
+  .navbarToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbarOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.45);
+    z-index: 35;
+  }
+
+  .navbarPanel {
+    display: block;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    transform: translateY(-140%);
+    transition: transform var(--dur-2) var(--ease);
+    z-index: 36;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: var(--shadow-md);
+    padding: 10px;
+  }
+
+  .navbarPanelOpen {
+    transform: translateY(0);
+  }
+
+  .navbarPanelLink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    font-weight: 700;
+    color: rgba(17, 24, 39, 0.92);
+  }
+
+  .navbarPanelLink:hover {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.18);
+  }
+
+  .navbarPanelLinkActive {
+    background: rgba(37, 99, 235, 0.12);
+    border-color: rgba(37, 99, 235, 0.25);
+  }
+
+  .navbarPanelFooter {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(17, 24, 39, 0.12);
+  }
+
+  .chartSkeletonPieWrap {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Table */
 .tableWrap {
   overflow-x: auto;

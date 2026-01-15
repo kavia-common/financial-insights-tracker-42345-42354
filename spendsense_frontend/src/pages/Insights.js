@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Card } from "../components/Card";
-import { ChartPlaceholder } from "../components/ChartPlaceholder";
+import { BarChartPlaceholder } from "../components/ChartPlaceholders";
 import { getMockInsights } from "../data/mockData";
 
 // PUBLIC_INTERFACE
@@ -31,10 +31,18 @@ export default function Insights() {
 
       <div className="grid grid2" aria-label="Insight charts">
         <Card title="Category momentum" subtitle="Month-over-month • placeholder">
-          <ChartPlaceholder title="Bar chart" hint="Spend by category (MoM change)" />
+          <BarChartPlaceholder
+            title="Category momentum"
+            description="Spend by category (MoM change) • placeholder"
+            data={insights}
+          />
         </Card>
         <Card title="Merchant concentration" subtitle="Top merchants • placeholder">
-          <ChartPlaceholder title="Treemap chart" hint="Merchant share of spend" />
+          <BarChartPlaceholder
+            title="Merchant concentration"
+            description="Top merchants by share of spend • placeholder"
+            data={insights}
+          />
         </Card>
       </div>
     </div>

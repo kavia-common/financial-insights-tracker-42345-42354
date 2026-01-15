@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
+import { Navbar } from "../components/Navbar";
 import { Topbar } from "../components/Topbar";
 
 function pageMeta(pathname) {
@@ -14,7 +15,7 @@ function pageMeta(pathname) {
 
 // PUBLIC_INTERFACE
 export function AppLayout() {
-  /** Application shell layout: responsive sidebar and topbar + routed outlet. */
+  /** Application shell layout: responsive sidebar + topbar + navbar and routed outlet. */
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
   const location = useLocation();
@@ -43,12 +44,10 @@ export function AppLayout() {
             <div style={{ width: 44 }} />
           </div>
 
-          <Topbar
-            title={meta.title}
-            subtitle={meta.subtitle}
-            searchValue={search}
-            onSearchChange={setSearch}
-          />
+          {/* Complementary responsive top navbar (collapsible on mobile). */}
+          <Navbar />
+
+          <Topbar title={meta.title} subtitle={meta.subtitle} searchValue={search} onSearchChange={setSearch} />
 
           {/* Route content */}
           <Outlet context={{ search }} />

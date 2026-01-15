@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { Card } from "../components/Card";
-import { ChartPlaceholder } from "../components/ChartPlaceholder";
+import { LineChartPlaceholder, PieChartPlaceholder } from "../components/ChartPlaceholders";
 import { StatWidget } from "../components/StatWidget";
 import { IconBell, IconLayout, IconSparkles, IconWallet } from "../components/Icons";
 import { TransactionsTable } from "../components/TransactionsTable";
@@ -82,10 +82,18 @@ export default function Dashboard() {
 
       <div className="grid grid2" aria-label="Charts row">
         <Card title="Spending trend" subtitle="Daily totals • placeholder">
-          <ChartPlaceholder title="Line chart" hint="Spending by day (last 30 days)" />
+          <LineChartPlaceholder
+            title="Spending trend"
+            description="Daily totals (last 30 days) • placeholder"
+            data={transactions}
+          />
         </Card>
         <Card title="Category mix" subtitle="Share of spend • placeholder">
-          <ChartPlaceholder title="Donut chart" hint="Category distribution (last 30 days)" />
+          <PieChartPlaceholder
+            title="Category mix"
+            description="Category distribution (last 30 days) • placeholder"
+            data={transactions}
+          />
         </Card>
       </div>
 
