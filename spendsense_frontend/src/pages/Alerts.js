@@ -5,45 +5,12 @@ import { FiltersBar } from "../components/FiltersBar";
 import { EmptyState } from "../components/EmptyState";
 import { CardSkeleton } from "../components/Skeletons";
 import { getMockAlertSeverities, getMockAlerts } from "../data/mockData";
-import { useAuth } from "../auth/AuthProvider";
-import { fetchAlerts } from "../lib/db";
 
 // PUBLIC_INTERFACE
 export default function Alerts() {
   /** Alerts page with client-side filters and consistent loading/empty states. */
-  const { session } = useAuth();
-
   const alerts = useMemo(() => getMockAlerts(), []);
   const severities = useMemo(() => getMockAlertSeverities(), []);
-
-  /**
-   * Example (authenticated call):
-   *   const { session } = useAuth();
-   *   if (session) {
-   *     const rows = await fetchAlerts({ limit: 25 });
-   *   } else {
-   *     // fallback to mock data
-   *   }
-   */
-  useEffect(() => {
-    let cancelled = false;
-
-    async function tryFetch() {
-      if (!session) return;
-      try {
-        await fetchAlerts({ limit: 5 });
-      } catch (e) {
-        if (cancelled) return;
-        // eslint-disable-next-line no-console
-        console.warn("Supabase alerts fetch failed (using mock fallback):", e?.message || e);
-      }
-    }
-
-    tryFetch();
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
 
   const [status, setStatus] = useState("All");
   const [severity, setSeverity] = useState("All");

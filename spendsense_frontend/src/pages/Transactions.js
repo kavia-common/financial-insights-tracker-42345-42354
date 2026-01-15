@@ -7,8 +7,6 @@ import { EmptyState } from "../components/EmptyState";
 import { DateRangePicker } from "../components/DateRangePicker";
 import { TableRowSkeleton } from "../components/Skeletons";
 import { getMockCategories, getMockTransactions } from "../data/mockData";
-import { useAuth } from "../auth/AuthProvider";
-import { fetchTransactions } from "../lib/db";
 
 function parseMoneyInput(v) {
   const s = String(v || "").trim();
@@ -28,42 +26,9 @@ function inDateRange(iso, from, to) {
 export default function Transactions() {
   /** Transactions page with filterable, sortable table and pagination (client-side mock filtering). */
   const { search: topbarSearch } = useOutletContext() || { search: "" };
-  const { session } = useAuth();
 
   const categories = useMemo(() => getMockCategories(), []);
-  const mockTransactions = useMemo(() => getMockTransactions(), []);
-
-  /**
-   * Example (authenticated call):
-   *   const { session } = useAuth();
-   *   if (session) {
-   *     const rows = await fetchTransactions({ limit: 25 });
-   *   } else {
-   *     // fallback to mock data
-   *   }
-   *
-   * We keep mock data as the current UI source of truth for now, and only attempt
-   * a lightweight fetch when a session exists.
-   */
-  useEffect(() => {
-    let cancelled = false;
-
-    async function tryFetch() {
-      if (!session) return;
-      try {
-        await fetchTransactions({ limit: 5 });
-      } catch (e) {
-        if (cancelled) return;
-        // eslint-disable-next-line no-console
-        console.warn("Supabase transactions fetch failed (using mock fallback):", e?.message || e);
-      }
-    }
-
-    tryFetch();
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
+  const transactions = useMemo(() => getMockTransactions(), []);
 
   const [filters, setFilters] = useState(() => ({
     dateFrom: "",
@@ -101,7 +66,7 @@ export default function Transactions() {
     const min = parseMoneyInput(filters.amountMin);
     const max = parseMoneyInput(filters.amountMax);
 
-    return mockTransactions.filter((t) => {
+    return transactions.filter((t) => {
       if (!inDateRange(t.date, filters.dateFrom || "", filters.dateTo || "")) return false;
 
       if (filters.category !== "All" && t.category !== filters.category) return false;
@@ -116,7 +81,7 @@ export default function Transactions() {
 
       return true;
     });
-  }, [mockTransactions, filters]);
+  }, [transactions, filters]);
 
   const statusText = isLoading ? "Updating…" : `${filtered.length} result${filtered.length === 1 ? "" : "s"}`;
 
@@ -126,25 +91,23 @@ export default function Transactions() {
         ariaLabel="Transaction filters"
         statusText={statusText}
         actions={
-          <>
-            <button
-              type="button"
-              className="btn btnGhost"
-              onClick={() =>
-                setFilters({
-                  dateFrom: "",
-                  dateTo: "",
-                  category: "All",
-                  amountMin: "",
-                  amountMax: "",
-                  search: String(topbarSearch || ""),
-                })
-              }
-              aria-label="Reset filters"
-            >
-              Reset
-            </button>
-          </>
+          <button
+            type="button"
+            className="btn btnGhost"
+            onClick={() =>
+              setFilters({
+                dateFrom: "",
+                dateTo: "",
+                category: "All",
+                amountMin: "",
+                amountMax: "",
+                search: String(topbarSearch || ""),
+              })
+            }
+            aria-label="Reset filters"
+          >
+            Reset
+          </button>
         }
       >
         <DateRangePicker

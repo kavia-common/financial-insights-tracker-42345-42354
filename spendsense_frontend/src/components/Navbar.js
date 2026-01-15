@@ -12,7 +12,10 @@ const navItems = [
 ];
 
 function initials(name) {
-  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   if (parts.length === 0) return "U";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -20,24 +23,21 @@ function initials(name) {
 
 // PUBLIC_INTERFACE
 export function Navbar({ brandTitle = "SpendSense" }) {
-  /** Responsive top navbar: collapsible on mobile, links to main pages, and auth status indicator. */
+  /** Responsive top navbar: collapsible on mobile, links to main pages, and demo auth toggle indicator. */
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const location = useLocation();
 
-  const { user, session, loading, signOut } = useAuth();
-
-  const isAuthenticated = !!session;
+  const { user, isAuthenticated, loading, signInDemo, signOutDemo } = useAuth();
 
   const displayName = useMemo(() => {
     const email = user?.email ? String(user.email) : "";
-    // Keep it short in the navbar
     if (email.includes("@")) return email.split("@")[0];
-    return email || "User";
-  }, [user?.email]);
+    return user?.name || email || "User";
+  }, [user?.email, user?.name]);
 
   const userMeta = useMemo(() => {
-    return { name: isAuthenticated ? displayName : "Guest", role: isAuthenticated ? "Signed in" : "Guest" };
+    return { name: isAuthenticated ? displayName : "Guest", role: isAuthenticated ? "Demo user" : "Guest" };
   }, [displayName, isAuthenticated]);
 
   // Close dropdown on route change.
@@ -87,22 +87,13 @@ export function Navbar({ brandTitle = "SpendSense" }) {
           <button
             type="button"
             className="navbarAuthBtn"
-            onClick={async () => {
-              // No sign-in UI yet; but real sign-out is useful for testing session reactivity.
-              if (!isAuthenticated) return;
-              await signOut();
+            onClick={() => {
+              if (isAuthenticated) signOutDemo();
+              else signInDemo();
             }}
-            aria-label={
-              loading ? "Auth loading" : isAuthenticated ? "Sign out (Supabase)" : "Not signed in (no sign-in UI yet)"
-            }
-            title={
-              loading
-                ? "Auth initializing…"
-                : isAuthenticated
-                  ? "Sign out (Supabase)"
-                  : "No sign-in UI yet. Add a sign-in page when ready."
-            }
-            disabled={loading || !isAuthenticated}
+            aria-label={loading ? "Auth loading" : isAuthenticated ? "Sign out (demo)" : "Sign in (demo)"}
+            title={loading ? "Auth initializing…" : isAuthenticated ? "Sign out (demo)" : "Sign in (demo)"}
+            disabled={loading}
           >
             <span
               className="navbarAuthDot"
@@ -110,9 +101,7 @@ export function Navbar({ brandTitle = "SpendSense" }) {
               data-on={isAuthenticated && !loading ? "1" : "0"}
               style={loading ? { opacity: 0.6 } : undefined}
             />
-            <span style={{ fontWeight: 750 }}>
-              {loading ? "Loading…" : isAuthenticated ? "Signed in" : "Guest"}
-            </span>
+            <span style={{ fontWeight: 750 }}>{loading ? "Loading…" : isAuthenticated ? "Signed in" : "Guest"}</span>
           </button>
 
           <div className="navbarAvatar" aria-label="User summary">
@@ -143,11 +132,9 @@ export function Navbar({ brandTitle = "SpendSense" }) {
         ))}
 
         <div className="navbarPanelFooter">
-          <div style={{ color: "rgba(17,24,39,0.6)", fontSize: 12 }}>
-            Protected routes demo: Insights & Alerts
-          </div>
+          <div style={{ color: "rgba(17,24,39,0.6)", fontSize: 12 }}>Protected routes demo: Insights & Alerts</div>
           <div style={{ marginTop: 6, color: "rgba(17,24,39,0.55)", fontSize: 12 }}>
-            Auth: {loading ? "initializing…" : isAuthenticated ? "signed in" : "guest"}
+            Auth: {loading ? "initializing…" : isAuthenticated ? "signed in (demo)" : "guest"}
           </div>
         </div>
       </div>
