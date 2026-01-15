@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { Navbar } from "../components/Navbar";
 import { Topbar } from "../components/Topbar";
+import { AIAssistantChat } from "../components/AIAssistantChat";
 
 function pageMeta(pathname) {
   if (pathname === "/") return { title: "Dashboard", subtitle: "Your spending at a glance" };
@@ -53,6 +54,9 @@ export function AppLayout() {
           <Outlet context={{ search }} />
         </main>
       </div>
+
+      {/* Persistent AI chat entrypoint (FAB + slide-in panel) */}
+      <AIAssistantChat />
     </div>
   );
 }

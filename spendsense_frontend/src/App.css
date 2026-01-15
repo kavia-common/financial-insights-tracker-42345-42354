@@ -1702,3 +1702,280 @@ a {
 .dashSummaryLoading {
   padding: 6px 0;
 }
+
+/* AI Chat (persistent FAB + slide-in panel) */
+.aiChatFab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: var(--grad-primary);
+  color: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 95;
+  transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), filter var(--dur-2) var(--ease);
+}
+
+.aiChatFab:hover {
+  box-shadow: 0 22px 60px rgba(17, 24, 39, 0.18);
+  filter: saturate(1.02);
+}
+
+.aiChatFab:active {
+  transform: translateY(1px);
+}
+
+.aiChatFab:focus {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--shadow-lg);
+}
+
+.aiChatFabIcon {
+  filter: drop-shadow(0 1px 0 rgba(17, 24, 39, 0.18));
+}
+
+.aiChatOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.0);
+  z-index: 90;
+  pointer-events: none;
+  display: grid;
+  justify-items: end;
+  transition: background var(--dur-2) var(--ease);
+}
+
+.aiChatOverlayOpen {
+  pointer-events: auto;
+  background: rgba(17, 24, 39, 0.42);
+}
+
+.aiChatPanel {
+  height: 100%;
+  width: min(520px, 92vw);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  border-left: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: var(--shadow-depth-2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateX(110%);
+  transition: transform var(--dur-3) var(--ease);
+}
+
+.aiChatPanelOpen {
+  transform: translateX(0);
+}
+
+.aiChatHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-bottom: 1px solid rgba(17, 24, 39, 0.10);
+}
+
+.aiChatHeaderLeft {
+  min-width: 0;
+}
+
+.aiChatKicker {
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(37, 99, 235, 0.95);
+}
+
+.aiChatTitle {
+  margin: 6px 0 0 0;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.aiChatSub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.62);
+}
+
+.aiChatHeaderRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.aiChatHeaderBtn {
+  white-space: nowrap;
+}
+
+.aiChatBody {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.aiChatMessages {
+  padding: var(--space-5);
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.aiChatMsgRow {
+  display: flex;
+  align-items: flex-end;
+}
+
+.aiChatMsgRowAssistant {
+  justify-content: flex-start;
+}
+
+.aiChatMsgRowUser {
+  justify-content: flex-end;
+}
+
+.aiChatBubble {
+  max-width: min(420px, 82%);
+  border-radius: 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  box-shadow: var(--shadow-xs);
+}
+
+.aiChatBubbleAssistant {
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(17, 24, 39, 0.86);
+}
+
+.aiChatBubbleUser {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(56, 189, 248, 0.14));
+  border-color: rgba(37, 99, 235, 0.22);
+  color: rgba(17, 24, 39, 0.88);
+}
+
+.aiChatTyping {
+  padding: 2px 0;
+}
+
+.aiChatSuggestions {
+  padding: 0 var(--space-5) var(--space-4) var(--space-5);
+  border-top: 1px dashed rgba(17, 24, 39, 0.12);
+  display: grid;
+  gap: 10px;
+}
+
+.aiChatSuggestionGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.aiChatSuggestionTitle {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(17, 24, 39, 0.62);
+}
+
+.aiChatSuggestionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aiChatSuggestionChip {
+  max-width: 100%;
+  text-align: left;
+  line-height: 1.2;
+  font-weight: 750;
+}
+
+.aiChatSuggestionChip:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.aiChatComposer {
+  padding: var(--space-4) var(--space-5) var(--space-5) var(--space-5);
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+  background: rgba(249, 250, 251, 0.72);
+}
+
+.aiChatComposerRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: 8px;
+}
+
+.aiChatInput {
+  min-width: 0;
+}
+
+.aiChatHint {
+  margin-top: 8px;
+}
+
+/* Answer formatting inside assistant bubbles */
+.aiChatAnswerMain {
+  color: rgba(17, 24, 39, 0.86);
+}
+
+.aiChatAnswerMuted {
+  color: rgba(17, 24, 39, 0.62);
+}
+
+.aiChatMiniTitle {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(37, 99, 235, 0.92);
+  margin-bottom: 8px;
+}
+
+.aiChatList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: rgba(17, 24, 39, 0.82);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.aiChatFollowUpChip {
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.82);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(37, 99, 235, 0.06);
+}
+
+@media (max-width: 640px) {
+  .aiChatComposerRow {
+    grid-template-columns: 1fr;
+  }
+  .aiChatHeaderRight {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
