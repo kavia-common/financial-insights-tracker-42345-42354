@@ -34,6 +34,16 @@ function randomDelayMs(min = 200, max = 400) {
   return Math.floor(lo + Math.random() * (hi - lo + 1));
 }
 
+/**
+ * Formats a Date as a user-local time label suitable for chat timestamps.
+ * We intentionally keep this local and dependency-free.
+ */
+function formatChatTimestamp(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 function normalizeWhyQuestion(q) {
   // Small, deterministic normalizer for "why" detection.
   return String(q || "")
@@ -99,18 +109,8 @@ function ChatIcon({ title }) {
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
-      <path
-        d="M7.5 8.5h9"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7.5 11.5h7"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
+      <path d="M7.5 8.5h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M7.5 11.5h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -140,12 +140,14 @@ export function AIAssistantChat() {
   const [lastContext, setLastContext] = useState(null);
 
   const [messages, setMessages] = useState(() => {
+    const now = Date.now();
     return [
       {
         id: `m-${Math.random().toString(16).slice(2)}`,
         role: "assistant",
         kind: "text",
         text: "Hi — ask a question about what’s shown on the dashboard. I’ll answer only from the data currently visible in the app.",
+        createdAt: now,
       },
     ];
   });
@@ -156,6 +158,10 @@ export function AIAssistantChat() {
   const inputRef = useRef(null);
   const messagesRef = useRef(null);
   const timerRef = useRef(null);
+
+  // Track newest assistant message id so we can announce it politely without re-announcing the full log.
+  const lastAnnouncedAssistantIdRef = useRef(null);
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   const panelTitleId = useMemo(() => `ai-chat-title-${Math.random().toString(16).slice(2)}`, []);
 
@@ -188,15 +194,36 @@ export function AIAssistantChat() {
   }, []);
 
   const appendMessage = (msg) => {
-    setMessages((prev) => [...prev, msg]);
+    const withMeta = {
+      ...msg,
+      createdAt: msg?.createdAt ?? Date.now(),
+      // Used only for subtle enter animations (CSS) and harmless to logic.
+      justAdded: true,
+    };
+
+    setMessages((prev) => [...prev, withMeta]);
+
+    // Remove the justAdded flag after the animation window to avoid re-triggering on re-renders.
+    setTimeout(() => {
+      setMessages((prev) => prev.map((m) => (m.id === withMeta.id ? { ...m, justAdded: false } : m)));
+    }, 500);
   };
 
-  const scrollToBottomSoon = () => {
+  const isNearBottom = (el, thresholdPx = 40) => {
+    if (!el) return true;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return distance <= thresholdPx;
+  };
+
+  const scrollToBottomSoon = (behavior = "smooth") => {
     // Allow layout to settle first.
     setTimeout(() => {
       const el = messagesRef.current;
       if (!el) return;
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+
+      // Only auto-scroll if user is already near bottom; avoids "stealing" scroll position.
+      if (!isNearBottom(el, 64)) return;
+      el.scrollTo({ top: el.scrollHeight, behavior });
     }, 0);
   };
 
@@ -224,7 +251,6 @@ export function AIAssistantChat() {
   };
 
   const closePanel = () => setOpen(false);
-  const openPanel = () => setOpen(true);
   const togglePanel = () => setOpen((v) => !v);
 
   const onAsk = (questionText) => {
@@ -236,14 +262,15 @@ export function AIAssistantChat() {
     if (!q) return;
 
     // Add user message immediately
-    const userMsg = {
+    appendMessage({
       id: `m-${Math.random().toString(16).slice(2)}`,
       role: "user",
       kind: "text",
       text: q,
-    };
-    appendMessage(userMsg);
-    scrollToBottomSoon();
+    });
+
+    // For the user's own message, a smooth scroll feels natural.
+    scrollToBottomSoon("smooth");
 
     setLoading(true);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -252,15 +279,14 @@ export function AIAssistantChat() {
       // Keep "why is this happening?" behavior consistent with DashboardQA.
       if (isWhyHappeningQuestion(q)) {
         const r = explainTrend({ snapshot, context: lastContext });
-        const assistantMsg = {
+        appendMessage({
           id: `m-${Math.random().toString(16).slice(2)}`,
           role: "assistant",
           kind: "answer",
           answerResult: r,
           text: null,
-        };
-        appendMessage(assistantMsg);
-        scrollToBottomSoon();
+        });
+        scrollToBottomSoon("smooth");
         setLoading(false);
         return;
       }
@@ -278,14 +304,13 @@ export function AIAssistantChat() {
         // Show a clarification prompt as the assistant message, and show chips.
         setClarification(clarificationCandidate);
 
-        const assistantMsg = {
+        appendMessage({
           id: `m-${Math.random().toString(16).slice(2)}`,
           role: "assistant",
           kind: "text",
           text: clarificationCandidate.prompt,
-        };
-        appendMessage(assistantMsg);
-        scrollToBottomSoon();
+        });
+        scrollToBottomSoon("smooth");
         setLoading(false);
         return;
       }
@@ -293,15 +318,14 @@ export function AIAssistantChat() {
       const inferred = inferContextFromAnswer(q, r);
       if (inferred) setLastContext(inferred);
 
-      const assistantMsg = {
+      appendMessage({
         id: `m-${Math.random().toString(16).slice(2)}`,
         role: "assistant",
         kind: "answer",
         answerResult: r,
         text: null,
-      };
-      appendMessage(assistantMsg);
-      scrollToBottomSoon();
+      });
+      scrollToBottomSoon("smooth");
       setLoading(false);
     }, randomDelayMs(200, 400));
   };
@@ -317,7 +341,7 @@ export function AIAssistantChat() {
       kind: "text",
       text: "Summarize Dashboard",
     });
-    scrollToBottomSoon();
+    scrollToBottomSoon("smooth");
 
     setLoading(true);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -340,7 +364,7 @@ export function AIAssistantChat() {
         kind: "text",
         text: lines.join("\n").trim() || "No summary is available from the current dashboard view.",
       });
-      scrollToBottomSoon();
+      scrollToBottomSoon("smooth");
       setLoading(false);
     }, randomDelayMs(200, 400));
   };
@@ -352,21 +376,24 @@ export function AIAssistantChat() {
       kind: "text",
       text: "Executive Summary",
     });
-    scrollToBottomSoon();
+    scrollToBottomSoon("smooth");
 
     setLoading(true);
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
       const bullets = generateExecutiveSummary(snapshot);
-      const text = Array.isArray(bullets) && bullets.length > 0 ? `Highlights:\n- ${bullets.join("\n- ")}` : "No executive summary items are available from the current dashboard view.";
+      const text =
+        Array.isArray(bullets) && bullets.length > 0
+          ? `Highlights:\n- ${bullets.join("\n- ")}`
+          : "No executive summary items are available from the current dashboard view.";
       appendMessage({
         id: `m-${Math.random().toString(16).slice(2)}`,
         role: "assistant",
         kind: "text",
         text,
       });
-      scrollToBottomSoon();
+      scrollToBottomSoon("smooth");
       setLoading(false);
     }, randomDelayMs(200, 400));
   };
@@ -431,6 +458,26 @@ export function AIAssistantChat() {
     }
   }, [clarification]);
 
+  // Announce only newly-added assistant messages in a dedicated polite live region.
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last) return;
+
+    if (last.role !== "assistant") return;
+    if (last.id === lastAnnouncedAssistantIdRef.current) return;
+
+    lastAnnouncedAssistantIdRef.current = last.id;
+
+    // Keep announcements short; do not repeat whole chat.
+    const snippet =
+      last.kind === "answer"
+        ? String(last?.answerResult?.answer || "").trim()
+        : String(last?.text || "").trim();
+
+    const trimmed = snippet.length > 220 ? `${snippet.slice(0, 217)}…` : snippet;
+    setLiveAnnouncement(trimmed || "New assistant message.");
+  }, [messages]);
+
   const onSubmit = (e) => {
     e?.preventDefault?.();
     if (loading) return;
@@ -493,9 +540,8 @@ export function AIAssistantChat() {
       <button
         ref={fabRef}
         type="button"
-        className="aiChatFab"
+        className={`aiChatFab ${open ? "aiChatFabOpen" : ""}`}
         onClick={() => {
-          // If opening: open then focus input (effect handles focus).
           togglePanel();
         }}
         aria-label={open ? "Close AI assistant chat" : "Open AI assistant chat"}
@@ -506,6 +552,11 @@ export function AIAssistantChat() {
       >
         <ChatIcon title="AI chat" />
       </button>
+
+      {/* Dedicated aria-live region to announce NEW assistant messages only (polite). */}
+      <div className="srOnly" aria-live="polite" aria-atomic="true">
+        {liveAnnouncement}
+      </div>
 
       {/* Overlay + sliding panel */}
       <div
@@ -533,9 +584,7 @@ export function AIAssistantChat() {
               <h2 id={panelTitleId} className="aiChatTitle">
                 Chat
               </h2>
-              <div className="aiChatSub">
-                Answers are limited to dashboard-visible data.
-              </div>
+              <div className="aiChatSub">Answers are limited to dashboard-visible data.</div>
             </div>
 
             <div className="aiChatHeaderRight" aria-label="Chat actions">
@@ -574,36 +623,64 @@ export function AIAssistantChat() {
           </header>
 
           <div className="aiChatBody">
-            <div className="aiChatMessages" ref={messagesRef} role="log" aria-label="Chat messages" aria-live="polite">
-              {messages.map((m) => {
+            <div className="aiChatMessages" ref={messagesRef} role="log" aria-label="Chat messages">
+              {messages.map((m, idx) => {
                 const isUser = m.role === "user";
+                const prev = idx > 0 ? messages[idx - 1] : null;
+
+                // Group consecutive messages by author to reduce repetition:
+                // - Only show timestamp when role changes OR a large time gap OR first message.
+                const showMeta = (() => {
+                  if (!prev) return true;
+                  if (prev.role !== m.role) return true;
+
+                  const prevT = Number(prev.createdAt || 0);
+                  const t = Number(m.createdAt || 0);
+                  if (prevT && t && Math.abs(t - prevT) > 3 * 60 * 1000) return true; // 3+ minutes gap
+                  return false;
+                })();
 
                 return (
                   <div
                     key={m.id}
-                    className={`aiChatMsgRow ${isUser ? "aiChatMsgRowUser" : "aiChatMsgRowAssistant"}`}
+                    className={`aiChatMsgRow ${isUser ? "aiChatMsgRowUser" : "aiChatMsgRowAssistant"} ${
+                      m.justAdded ? "aiChatMsgRowNew" : ""
+                    }`}
                   >
-                    <div className={`aiChatBubble ${isUser ? "aiChatBubbleUser" : "aiChatBubbleAssistant"}`}>
-                      {m.kind === "answer" ? renderAnswerResult(m.answerResult) : renderAssistantText(m.text)}
+                    <div className={`aiChatBubbleWrap ${isUser ? "aiChatBubbleWrapUser" : "aiChatBubbleWrapAssistant"}`}>
+                      <div className={`aiChatBubble ${isUser ? "aiChatBubbleUser" : "aiChatBubbleAssistant"}`}>
+                        {m.kind === "answer" ? renderAnswerResult(m.answerResult) : renderAssistantText(m.text)}
+                      </div>
+
+                      {showMeta ? (
+                        <div className={`aiChatMeta ${isUser ? "aiChatMetaUser" : "aiChatMetaAssistant"}`}>
+                          <span className="aiChatTimestamp">{formatChatTimestamp(m.createdAt)}</span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 );
               })}
 
               {loading ? (
-                <div className="aiChatMsgRow aiChatMsgRowAssistant" aria-label="Assistant typing">
-                  <div className="aiChatBubble aiChatBubbleAssistant">
-                    <div className="aiChatTyping">
-                      <div className="skeleton skeletonMuted" style={{ height: 12, width: 180, borderRadius: 10 }} />
-                      <div style={{ height: 8 }} />
-                      <div className="skeleton skeletonMuted" style={{ height: 12, width: 240, borderRadius: 10 }} />
+                <div className="aiChatMsgRow aiChatMsgRowAssistant aiChatMsgRowNew" aria-label="Assistant typing">
+                  <div className="aiChatBubbleWrap aiChatBubbleWrapAssistant">
+                    <div className="aiChatBubble aiChatBubbleAssistant">
+                      <div className="aiChatTyping">
+                        <div className="skeleton skeletonMuted" style={{ height: 12, width: 180, borderRadius: 10 }} />
+                        <div style={{ height: 8 }} />
+                        <div className="skeleton skeletonMuted" style={{ height: 12, width: 240, borderRadius: 10 }} />
+                      </div>
+                    </div>
+                    <div className="aiChatMeta aiChatMetaAssistant">
+                      <span className="aiChatTimestamp">Typing…</span>
                     </div>
                   </div>
                 </div>
               ) : null}
             </div>
 
-            {/* Suggested question chips */}
+            {/* Suggested question chips (top-of-composer area) */}
             <div className="aiChatSuggestions" aria-label="Suggested questions">
               {clarification?.isUnclear ? (
                 <div className="aiChatSuggestionGroup" aria-label="Example questions">
@@ -674,9 +751,7 @@ export function AIAssistantChat() {
                 </button>
               </div>
 
-              <div className="helper aiChatHint">
-                Tip: Press ESC to close. Use the chips for quick questions.
-              </div>
+              <div className="helper aiChatHint">Tip: Press ESC to close. Use the chips for quick questions.</div>
             </form>
           </div>
         </section>
