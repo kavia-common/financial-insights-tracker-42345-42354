@@ -20,6 +20,8 @@ export function DashboardQA({ snapshot }) {
   const [result, setResult] = useState(null);
 
   const timerRef = useRef(null);
+  const inputRef = useRef(null);
+
   const inputId = "dashboard-qa-input";
   const regionId = "dashboard-qa-region";
 
@@ -32,17 +34,40 @@ export function DashboardQA({ snapshot }) {
     };
   }, []);
 
+  const suggestedGroups = useMemo(() => {
+    return [
+      {
+        title: "Performance-related",
+        questions: ["What’s my spending this month vs budget?", "Which category is costing me the most?"],
+      },
+      {
+        title: "Trend analysis",
+        questions: ["Are my weekly expenses going up or down?", "Any seasonal spikes this month?"],
+      },
+      {
+        title: "Comparison-based",
+        questions: ["How does this month compare to last month?", "Which category changed the most vs last month?"],
+      },
+      {
+        title: "Risk or anomaly detection",
+        questions: ["Any unusual or high-risk transactions?", "Did any alerts trigger today?"],
+      },
+    ];
+  }, []);
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
 
-  const submit = (e) => {
+  const submit = (e, forcedQuestion) => {
     e?.preventDefault?.();
 
+    // Prefer the forced question (used by suggestion chips) over current state.
+    const q = String(forcedQuestion ?? question ?? "").trim();
+
     // Graceful empty state: show a hint rather than fallback.
-    const q = String(question || "").trim();
     if (!q) {
       setResult(emptyState);
       return;
@@ -58,6 +83,14 @@ export function DashboardQA({ snapshot }) {
     }, randomDelayMs(200, 400));
   };
 
+  const onPickSuggestion = (q) => {
+    // Fill the input for transparency, keep focus for keyboard users, then submit.
+    setQuestion(q);
+    // Focus synchronously; state update doesn't need to finish for submission.
+    inputRef.current?.focus?.();
+    submit(null, q);
+  };
+
   const hasAnswer = Boolean(result?.answer);
   const isFallback = result?.answer === DASHBOARD_QA_FALLBACK_TEXT;
 
@@ -70,13 +103,14 @@ export function DashboardQA({ snapshot }) {
 
         <div className="dashQARow">
           <input
+            ref={inputRef}
             id={inputId}
             className="input dashQAInput"
             type="text"
             value={question}
             placeholder='e.g., "What is my monthly outflow?"'
             onChange={(e) => setQuestion(e.target.value)}
-            aria-describedby={`${regionId}-hint`}
+            aria-describedby={`${regionId}-hint ${regionId}-suggestions`}
           />
           <button type="submit" className="btn btnPrimary btnGradient" disabled={loading}>
             {loading ? "Answering…" : "Ask"}
@@ -85,6 +119,33 @@ export function DashboardQA({ snapshot }) {
 
         <div id={`${regionId}-hint`} className="helper">
           Tip: Try “top categories”, “largest transactions”, “flagged items”, or “net cashflow”.
+        </div>
+
+        <div
+          id={`${regionId}-suggestions`}
+          className="dashQASuggestions"
+          aria-label="Suggested questions"
+        >
+          {suggestedGroups.map((group) => (
+            <div key={group.title} className="dashQASuggestionGroup">
+              <div className="dashQASuggestionTitle">{group.title}</div>
+              <div className="dashQASuggestionChips">
+                {group.questions.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    className="chip dashQASuggestionChip"
+                    role="button"
+                    aria-label={`Ask: ${q}`}
+                    onClick={() => onPickSuggestion(q)}
+                    disabled={loading}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </form>
 
@@ -98,7 +159,7 @@ export function DashboardQA({ snapshot }) {
         {!hasAnswer && !loading ? (
           <div className="dashQAEmpty">
             <div className="dashQAEmptyTitle">No question yet</div>
-            <div className="dashQAEmptyDesc">Type a question above and press Enter.</div>
+            <div className="dashQAEmptyDesc">Type a question above and press Enter, or pick a suggestion.</div>
           </div>
         ) : null}
 

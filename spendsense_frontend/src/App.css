@@ -1495,6 +1495,44 @@ a {
   min-width: 0;
 }
 
+/* Suggested questions (compact, responsive, grouped) */
+.dashQASuggestions {
+  margin-top: 6px;
+  display: grid;
+  gap: 10px;
+}
+
+.dashQASuggestionGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.dashQASuggestionTitle {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(17, 24, 39, 0.62);
+}
+
+.dashQASuggestionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashQASuggestionChip {
+  max-width: 100%;
+  text-align: left;
+  line-height: 1.2;
+  font-weight: 750; /* match chip */
+}
+
+.dashQASuggestionChip:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .dashQAResult {
   margin-top: var(--space-4);
   border-top: 1px dashed rgba(17, 24, 39, 0.12);
