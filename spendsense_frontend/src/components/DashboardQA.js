@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "./Card";
-import { answerFromDashboard, DASHBOARD_QA_FALLBACK_TEXT } from "../utils/answerFromDashboard";
+import {
+  answerFromDashboard,
+  DASHBOARD_QA_FALLBACK_TEXT,
+  getDashboardClarification,
+} from "../utils/answerFromDashboard";
 import { explainTrend } from "../utils/explainTrend";
 
 function randomDelayMs(min = 200, max = 400) {
@@ -53,6 +57,10 @@ export function DashboardQA({ snapshot }) {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
+  // Clarification state: used when the user's question is ambiguous or doesn't map to dashboard fields.
+  const [clarification, setClarification] = useState(null);
+  const firstClarifyChipRef = useRef(null);
 
   // Remember prior context so a generic "why" can attach to the last discussed metric.
   const [lastContext, setLastContext] = useState(null);
@@ -128,6 +136,9 @@ export function DashboardQA({ snapshot }) {
     // Prefer the forced question (used by suggestion chips) over current state.
     const q = String(forcedQuestion ?? question ?? "").trim();
 
+    // Reset clarification on new attempt (unit-friendly state transition).
+    setClarification(null);
+
     // Graceful empty state: show a hint rather than fallback.
     if (!q) {
       setResult(emptyState);
@@ -138,17 +149,33 @@ export function DashboardQA({ snapshot }) {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
-      let r;
-
+      // Keep "Why is this happening?" behavior intact and do not block it with clarification logic.
       if (isWhyHappeningQuestion(q)) {
-        // Route generic "why" to explanation engine using snapshot + last known context (if any).
-        r = explainTrend({ snapshot, context: lastContext });
-        // Do not overwrite lastContext with a "why" question.
-      } else {
-        r = answerFromDashboard({ question: q, snapshot });
-        const inferred = inferContextFromAnswer(q, r);
-        if (inferred) setLastContext(inferred);
+        const r = explainTrend({ snapshot, context: lastContext });
+        setResult(r);
+        setLoading(false);
+        return;
       }
+
+      const r = answerFromDashboard({ question: q, snapshot });
+
+      // Minimal unclear-intent detection: if mapping fails, ask a clarifying question instead of answering.
+      const clarificationCandidate = getDashboardClarification({
+        question: q,
+        snapshot,
+        suggestionPool: suggestedGroups.map((g) => g.questions),
+        mappedAnswerText: r?.answer,
+      });
+
+      if (clarificationCandidate?.isUnclear) {
+        setResult(null); // Do not show any answer content for unclear queries.
+        setClarification(clarificationCandidate);
+        setLoading(false);
+        return;
+      }
+
+      const inferred = inferContextFromAnswer(q, r);
+      if (inferred) setLastContext(inferred);
 
       setResult(r);
       setLoading(false);
@@ -162,6 +189,13 @@ export function DashboardQA({ snapshot }) {
     inputRef.current?.focus?.();
     submit(null, q);
   };
+
+  useEffect(() => {
+    if (clarification?.isUnclear) {
+      // Accessibility: move focus to the first suggestion chip so keyboard users can proceed quickly.
+      firstClarifyChipRef.current?.focus?.();
+    }
+  }, [clarification]);
 
   const hasAnswer = Boolean(result?.answer);
   const isFallback = result?.answer === DASHBOARD_QA_FALLBACK_TEXT;
@@ -228,7 +262,7 @@ export function DashboardQA({ snapshot }) {
         aria-label="Dashboard answer"
         aria-live="polite"
       >
-        {!hasAnswer && !loading ? (
+        {!hasAnswer && !loading && !clarification ? (
           <div className="dashQAEmpty">
             <div className="dashQAEmptyTitle">No question yet</div>
             <div className="dashQAEmptyDesc">Type a question above and press Enter, or pick a suggestion.</div>
@@ -240,6 +274,36 @@ export function DashboardQA({ snapshot }) {
             <div className="skeleton skeletonMuted" style={{ height: 14, width: "72%", borderRadius: 10 }} />
             <div style={{ height: 10 }} />
             <div className="skeleton skeletonMuted" style={{ height: 12, width: "92%", borderRadius: 10 }} />
+          </div>
+        ) : null}
+
+        {!loading && clarification?.isUnclear ? (
+          <div className="dashQAAnswerWrap">
+            <div className="dashQAAnswer" aria-live="polite">
+              {clarification.prompt}
+            </div>
+
+            <div className="dashQASuggestions" aria-label="Example questions">
+              <div className="dashQASuggestionGroup">
+                <div className="dashQASuggestionTitle">Examples</div>
+                <div className="dashQASuggestionChips">
+                  {clarification.suggestions.slice(0, 2).map((sq, idx) => (
+                    <button
+                      key={sq}
+                      ref={idx === 0 ? firstClarifyChipRef : null}
+                      type="button"
+                      className="chip dashQASuggestionChip"
+                      role="button"
+                      aria-label={`Ask: ${sq}`}
+                      onClick={() => onPickSuggestion(sq)}
+                      disabled={loading}
+                    >
+                      {sq}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         ) : null}
 

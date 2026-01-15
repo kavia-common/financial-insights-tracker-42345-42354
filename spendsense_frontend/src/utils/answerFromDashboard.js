@@ -302,3 +302,68 @@ export function answerFromDashboard({ question, snapshot } = {}) {
 }
 
 export const DASHBOARD_QA_FALLBACK_TEXT = FALLBACK;
+
+/**
+ * Returns whether a user query is unclear/incomplete and should trigger a clarification step,
+ * plus exactly two example questions to help the user proceed.
+ *
+ * Note: This does NOT attempt to answer; it only guides the user to ask a clearer question.
+ *
+ * PUBLIC_INTERFACE
+ * @param {Object} params
+ * @param {string} params.question
+ * @param {Object} params.snapshot
+ * @param {string[][]} params.suggestionPool - array of suggestion arrays (e.g., grouped chips)
+ * @param {string|null} params.mappedAnswerText - typically result.answer from answerFromDashboard()
+ * @returns {{isUnclear: boolean, prompt: string, suggestions: [string, string]}}
+ */
+ // PUBLIC_INTERFACE
+export function getDashboardClarification({ question, snapshot, suggestionPool, mappedAnswerText } = {}) {
+  // Unit-friendly, deterministic heuristics for "unclear intent" detection.
+  const qRaw = String(question || "").trim();
+  const q = normalizeQuestion(qRaw);
+
+  const prompt = "What would you like to focus on?";
+  const allSuggestions = Array.isArray(suggestionPool)
+    ? suggestionPool.flat().filter((s) => typeof s === "string" && s.trim().length > 0)
+    : [];
+
+  // Choose two examples from the existing suggestion set (no new copy sources).
+  const suggestions = [
+    allSuggestions[0] || "What’s my spending this month vs budget?",
+    allSuggestions[1] || "How does this month compare to last month?",
+  ].slice(0, 2);
+
+  const genericPhrases = new Set([
+    "help",
+    "what now",
+    "what next",
+    "now what",
+    "hi",
+    "hello",
+    "hey",
+    "ok",
+    "okay",
+    "thanks",
+    "thank you",
+  ]);
+
+  // Basic emptiness / too-short / generic checks.
+  if (!q) return { isUnclear: true, prompt, suggestions: [suggestions[0], suggestions[1]] };
+  if (q.length < 4) return { isUnclear: true, prompt, suggestions: [suggestions[0], suggestions[1]] };
+  if (genericPhrases.has(q)) return { isUnclear: true, prompt, suggestions: [suggestions[0], suggestions[1]] };
+
+  // If the mapping engine can't map to any snapshot field, treat as unclear rather than answering fallback text.
+  // Also treat "data not available" as unclear if the snapshot contains usable data (i.e., user likely asked off-topic).
+  const hasSomeSnapshotData =
+    Boolean(snapshot?.kpis) ||
+    (Array.isArray(snapshot?.tables?.topCategories) && snapshot.tables.topCategories.length > 0) ||
+    (Array.isArray(snapshot?.tables?.largestSpends) && snapshot.tables.largestSpends.length > 0) ||
+    (Array.isArray(snapshot?.series?.spendingByDay) && snapshot.series.spendingByDay.length > 0);
+
+  if (mappedAnswerText === FALLBACK && hasSomeSnapshotData) {
+    return { isUnclear: true, prompt, suggestions: [suggestions[0], suggestions[1]] };
+  }
+
+  return { isUnclear: false, prompt, suggestions: [suggestions[0], suggestions[1]] };
+}
