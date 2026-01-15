@@ -6,8 +6,10 @@ import { StatWidget } from "../components/StatWidget";
 import { IconBell, IconLayout, IconSparkles, IconWallet } from "../components/Icons";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { DashboardSummaryPanel } from "../components/DashboardSummaryPanel";
+import { DashboardQA } from "../components/DashboardQA";
 import { getMockTransactions } from "../data/mockData";
 import { summarizeDashboard } from "../utils/summarizeDashboard";
+import { buildDashboardSnapshot } from "../utils/snapshot";
 
 function computeKPIs(transactions) {
   const outflow = transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
@@ -48,6 +50,8 @@ export default function Dashboard() {
 
   const kpis = useMemo(() => computeKPIs(transactions), [transactions]);
 
+  const snapshot = useMemo(() => buildDashboardSnapshot({ transactions, kpis }), [transactions, kpis]);
+
   const onSummarize = () => {
     setSummaryOpen(true);
     setSummaryLoading(true);
@@ -87,6 +91,8 @@ export default function Dashboard() {
       </div>
 
       <div className="grid" aria-label="Dashboard content">
+        <DashboardQA snapshot={snapshot} />
+
         <div className="grid grid4" aria-label="KPI widgets">
           <Card>
             <StatWidget
