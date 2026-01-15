@@ -1,7 +1,7 @@
 /* Ocean Professional (Modern Fintech) Theme Tokens + App Styles */
 :root {
   /* Brand */
-  --color-primary: #2563eb; /* blue */
+  --color-primary: #2563eb; /* ocean blue */
   --color-accent: #f59e0b; /* amber */
   --color-danger: #ef4444;
   --color-success: #10b981;
@@ -9,7 +9,7 @@
   /* Surfaces */
   --color-bg: #f9fafb;
   --color-surface: #ffffff;
-  --color-surface-2: rgba(255, 255, 255, 0.82);
+  --color-surface-2: rgba(255, 255, 255, 0.86);
   --color-overlay: rgba(17, 24, 39, 0.45);
 
   /* Text */
@@ -20,11 +20,18 @@
   --color-border: rgba(17, 24, 39, 0.10);
   --color-border-strong: rgba(17, 24, 39, 0.16);
 
+  /* Gradient tokens (Ocean Professional) */
+  --grad-primary: linear-gradient(135deg, #2563eb 0%, #38bdf8 55%, #a5f3fc 100%);
+  --grad-primary-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(56, 189, 248, 0.85) 60%, rgba(165, 243, 252, 0.65) 100%);
+  --grad-sheen: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(37, 99, 235, 0.09) 50%, rgba(255, 255, 255, 0) 100%);
+
   /* Shadows (soft, fintech) */
   --shadow-xs: 0 1px 1px rgba(17, 24, 39, 0.04);
   --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
   --shadow-md: 0 10px 22px rgba(17, 24, 39, 0.10);
   --shadow-lg: 0 18px 50px rgba(17, 24, 39, 0.14);
+  --shadow-depth-1: 0 10px 24px rgba(17, 24, 39, 0.10), 0 1px 0 rgba(255, 255, 255, 0.55) inset;
+  --shadow-depth-2: 0 22px 60px rgba(17, 24, 39, 0.16), 0 1px 0 rgba(255, 255, 255, 0.60) inset;
 
   /* Radius */
   --radius-sm: 12px;
@@ -48,13 +55,13 @@
   --dur-2: 220ms;
   --dur-3: 360ms;
 
-  /* Focus ring */
-  --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.14);
+  /* Focus ring (ocean + subtle amber edge for clarity) */
+  --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.14), 0 0 0 1px rgba(245, 158, 11, 0.14);
 
-  /* Gradient (subtle fintech background) */
+  /* Gradient (soft fintech app background: top ocean tint -> bottom gray-50) */
   --app-gradient: radial-gradient(1200px 600px at 18% 0%, rgba(37, 99, 235, 0.12), transparent 55%),
     radial-gradient(1000px 500px at 90% 8%, rgba(245, 158, 11, 0.10), transparent 55%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.06), #f9fafb 55%);
+    linear-gradient(180deg, rgba(37, 99, 235, 0.06), #f9fafb 55%);
 }
 
 * {
@@ -80,7 +87,7 @@ a {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  background: rgba(17, 24, 39, 0.06);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), rgba(17, 24, 39, 0.05));
 }
 
 .skeleton::after {
@@ -93,7 +100,7 @@ a {
 }
 
 .skeletonMuted {
-  background: rgba(17, 24, 39, 0.05);
+  background: rgba(37, 99, 235, 0.045);
 }
 
 /* App Shell Layout */
@@ -114,13 +121,14 @@ a {
   position: sticky;
   top: 0;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.80);
   backdrop-filter: blur(14px);
   border-right: 1px solid var(--color-border);
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.65) inset;
 }
 
 .brandRow {
@@ -169,6 +177,7 @@ a {
 }
 
 .navLink {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -177,7 +186,21 @@ a {
   text-decoration: none;
   color: var(--color-text);
   border: 1px solid transparent;
-  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
+}
+
+.navLink::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease);
 }
 
 .navLink:hover {
@@ -192,7 +215,12 @@ a {
 .navLinkActive {
   background: rgba(37, 99, 235, 0.12);
   border-color: rgba(37, 99, 235, 0.25);
-  box-shadow: 0 0 0 4px rgba(37,99,235,0.06) inset;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06) inset;
+}
+
+.navLinkActive::before {
+  background: var(--grad-primary-soft);
+  opacity: 1;
 }
 
 .navIcon {
@@ -375,18 +403,39 @@ a {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.90);
+  position: relative;
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   padding: var(--space-5);
   transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+  overflow: hidden;
+}
+
+/* Subtle gradient edge to make cards feel more "fintech premium" without hurting contrast */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(245, 158, 11, 0.16), rgba(17, 24, 39, 0.08));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: rgba(17,24,39,0.14);
+  box-shadow: var(--shadow-depth-1);
+  border-color: rgba(17, 24, 39, 0.14);
   transform: translateY(-1px);
+}
+
+.card:hover::before {
+  opacity: 0.75;
 }
 
 .cardHeaderRow {
@@ -415,6 +464,7 @@ a {
 
 /* Filter UI */
 .filtersBar {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--space-4);
@@ -422,8 +472,23 @@ a {
   padding: var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: rgba(255,255,255,0.80);
+  background: rgba(255, 255, 255, 0.82);
   box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.filtersBar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(245, 158, 11, 0.12), rgba(17, 24, 39, 0.06));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
 }
 
 .filtersGrid {
@@ -502,24 +567,38 @@ a {
 }
 
 .segmentBtnActive {
-  background: rgba(37, 99, 235, 0.12);
-  color: rgba(37,99,235,1);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.06) inset;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(56, 189, 248, 0.10));
+  color: rgba(37, 99, 235, 1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06) inset;
 }
 
 /* Chips */
 .chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 7px 10px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(17,24,39,0.12);
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.92);
   font-size: 12px;
   font-weight: 750;
   cursor: pointer;
-  transition: transform var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+  transition: transform var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
+  overflow: hidden;
+}
+
+.chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--grad-sheen);
+  transform: translateX(-70%);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-3) var(--ease);
+  pointer-events: none;
 }
 
 .chip:hover {
@@ -527,14 +606,24 @@ a {
   background: rgba(37,99,235,0.06);
 }
 
+.chip:hover::after {
+  opacity: 1;
+  transform: translateX(70%);
+}
+
 .chip:active {
   transform: translateY(1px);
 }
 
 .chipSelected {
-  border-color: rgba(37,99,235,0.25);
+  border-color: rgba(37,99,235,0.30);
   background: rgba(37,99,235,0.12);
   color: rgba(37,99,235,1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06) inset;
+}
+
+.chipSelected::after {
+  opacity: 0.6;
 }
 
 /* Empty state */
@@ -644,9 +733,9 @@ a {
   position: relative;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.80);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-depth-1);
   overflow: hidden;
 }
 
@@ -699,6 +788,7 @@ a {
 }
 
 .navbarLink {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -707,9 +797,23 @@ a {
   text-decoration: none;
   border: 1px solid transparent;
   color: rgba(17, 24, 39, 0.92);
-  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
   font-size: 13px;
   font-weight: 700;
+}
+
+.navbarLink::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease);
 }
 
 .navbarLink:hover {
@@ -724,6 +828,11 @@ a {
 .navbarLinkActive {
   background: rgba(37, 99, 235, 0.12);
   border-color: rgba(37, 99, 235, 0.25);
+}
+
+.navbarLinkActive::after {
+  background: var(--grad-primary-soft);
+  opacity: 1;
 }
 
 .navbarIcon {
@@ -955,6 +1064,7 @@ a {
   }
 
   .navbarPanelLink {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -966,6 +1076,19 @@ a {
     color: rgba(17, 24, 39, 0.92);
   }
 
+  .navbarPanelLink::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 999px;
+    background: transparent;
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease);
+  }
+
   .navbarPanelLink:hover {
     background: rgba(37, 99, 235, 0.08);
     border-color: rgba(37, 99, 235, 0.18);
@@ -974,6 +1097,11 @@ a {
   .navbarPanelLinkActive {
     background: rgba(37, 99, 235, 0.12);
     border-color: rgba(37, 99, 235, 0.25);
+  }
+
+  .navbarPanelLinkActive::before {
+    background: var(--grad-primary-soft);
+    opacity: 1;
   }
 
   .navbarPanelFooter {
@@ -1110,6 +1238,42 @@ a {
   background: rgba(37, 99, 235, 0.12);
   color: rgba(37, 99, 235, 1);
   font-weight: 800;
+}
+
+/* Optional gradient variant: add `btnGradient` alongside `btn btnPrimary` */
+.btnGradient {
+  position: relative;
+  border-color: rgba(37, 99, 235, 0.28);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(56, 189, 248, 0.14));
+  color: rgba(17, 24, 39, 0.88); /* readable on pale gradient */
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.btnGradient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--grad-sheen);
+  transform: translateX(-70%);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-3) var(--ease);
+  pointer-events: none;
+}
+
+.btnGradient:hover {
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: var(--shadow-sm);
+}
+
+.btnGradient:hover::after {
+  opacity: 1;
+  transform: translateX(70%);
+}
+
+.btnGradient:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .btnGhost {
